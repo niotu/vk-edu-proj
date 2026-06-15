@@ -1,0 +1,78 @@
+name: vk-edu-proj
+
+x-jwt-env: &jwt-env
+  JWT_SECRET: dev-jwt-secret-change-in-production
+  JWT_REFRESH_SECRET: dev-jwt-refresh-secret-change-in-production
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: vk-edu-postgres
+    environment:
+      POSTGRES_USER: authuser
+      POSTGRES_PASSWORD: authpassword
+      POSTGRES_DB: auth_service
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authuser -d auth_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+    container_name: vk-edu-auth-service
+    environment:
+      <<: *jwt-env
+      DATABASE_URL: postgresql://authuser:authpassword@postgres:5432/auth_service?schema=public
+      JWT_EXPIRY: 1h
+      JWT_REFRESH_EXPIRY: 7d
+      PORT: 3001
+      NODE_ENV: production
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  quiz-service:
+    build:
+      context: ./services/quiz-service
+    container_name: vk-edu-quiz-service
+    environment:
+      <<: *jwt-env
+      DATABASE_URL: postgresql://authuser:authpassword@postgres:5432/quiz_service?schema=public
+      PORT: 3002
+      NODE_ENV: production
+      CORS_ORIGIN: http://localhost:3000
+      ROOM_CODE_LENGTH: 6
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
+  web:
+    build:
+      context: ./apps/web/quiz-pools
+      args:
+        VITE_AUTH_API_URL: http://localhost:3001
+        VITE_QUIZ_API_URL: http://localhost:3002
+    container_name: vk-edu-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth-service
+      - quiz-service
+
+volumes:
+  postgres_data:
