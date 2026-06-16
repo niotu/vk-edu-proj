@@ -8,10 +8,12 @@
 
 Работоспособный прототип квиз-платформы, в котором:
 
-| Роль | Возможности |
-|------|-------------|
+
+| Роль                        | Возможности                                                                                                           |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | **ORGANIZER** (организатор) | Регистрация, создание и настройка квиза, добавление вопросов, запуск live-сессии по коду комнаты, просмотр лидерборда |
-| **MEMBER** (участник) | Регистрация, вход в комнату по коду, ответы на вопросы в реальном времени, просмотр результатов и истории участия |
+| **MEMBER** (участник)       | Регистрация, вход в комнату по коду, ответы на вопросы в реальном времени, просмотр результатов и истории участия     |
+
 
 **Вне MVP (v1.0):** соцсети, OAuth, загрузка файлов на S3, мультиязычность, админ-панель, рейтинги между организаторами, мобильные приложения.
 
@@ -43,6 +45,8 @@ flowchart TB
   Quiz -.->|JWT verify same secret| Auth
 ```
 
+
+
 На этапе MVP допускается **одна физическая БД PostgreSQL** с двумя логическими базами (`auth_service`, `quiz_service`) или одной БД и двумя схемами — по усмотрению DevOps. Сервисы остаются раздельными по коду и деплою.
 
 ---
@@ -62,35 +66,41 @@ vk-edu-proj/
 └── TASK.md                  ← ТЗ платформы VK Edu
 ```
 
-| Сервис | Порт | Статус | Ответственность |
-|--------|------|--------|-----------------|
-| `auth-service` | 3001 | **Реализован** | Пользователи, JWT, роли |
-| `quiz-service` | 3002 | Запланирован | Квизы, вопросы, сессии, ответы, очки, Socket.IO |
-| `apps/web` | 3000 | Запланирован | UI, роутинг, вызов API |
+
+| Сервис         | Порт | Статус         | Ответственность                                 |
+| -------------- | ---- | -------------- | ----------------------------------------------- |
+| `auth-service` | 3001 | **Реализован** | Пользователи, JWT, роли                         |
+| `quiz-service` | 3002 | Запланирован   | Квизы, вопросы, сессии, ответы, очки, Socket.IO |
+| `apps/web`     | 3000 | Запланирован   | UI, роутинг, вызов API                          |
+
 
 ---
 
 ## 4. Технологический стек
 
-| Слой | Технология |
-|------|------------|
-| Frontend | React 18+, Vite, TypeScript, React Router |
-| HTTP API | Express 4, TypeScript |
-| ORM | Prisma 5 |
-| БД | PostgreSQL 16 |
-| Auth | JWT (access + refresh httpOnly cookie) |
-| Realtime | Socket.IO 4 (в `quiz-service`) |
-| Пароли | bcrypt |
-| Локальная инфра | Docker Compose |
+
+| Слой            | Технология                                |
+| --------------- | ----------------------------------------- |
+| Frontend        | React 18+, Vite, TypeScript, React Router |
+| HTTP API        | Express 4, TypeScript                     |
+| ORM             | Prisma 5                                  |
+| БД              | PostgreSQL 16                             |
+| Auth            | JWT (access + refresh httpOnly cookie)    |
+| Realtime        | Socket.IO 4 (в `quiz-service`)            |
+| Пароли          | bcrypt                                    |
+| Локальная инфра | Docker Compose                            |
+
 
 ---
 
 ## 5. Роли и права
 
-| Prisma `Role` | UI-роль | Права |
-|---------------|---------|-------|
-| `MEMBER` | Участник | Join room, submit answers, view own history |
-| `ORGANIZER` | Организатор | CRUD своих квизов, start/end session, show questions |
+
+| Prisma `Role` | UI-роль     | Права                                                |
+| ------------- | ----------- | ---------------------------------------------------- |
+| `MEMBER`      | Участник    | Join room, submit answers, view own history          |
+| `ORGANIZER`   | Организатор | CRUD своих квизов, start/end session, show questions |
+
 
 Проверка роли на защищённых маршрутах `quiz-service`:
 
@@ -199,14 +209,18 @@ erDiagram
   }
 ```
 
+
+
 #### Перечисления (enum)
 
-| Enum | Значения | Назначение |
-|------|----------|------------|
-| `QuizStatus` | `DRAFT`, `PUBLISHED`, `ARCHIVED` | Жизненный цикл квиза |
-| `QuestionType` | `TEXT`, `IMAGE` | Тип контента вопроса |
-| `ChoiceMode` | `SINGLE`, `MULTIPLE` | Один или несколько правильных вариантов |
-| `SessionStatus` | `LOBBY`, `ACTIVE`, `QUESTION_OPEN`, `QUESTION_CLOSED`, `FINISHED` | Состояние live-сессии |
+
+| Enum            | Значения                                                          | Назначение                              |
+| --------------- | ----------------------------------------------------------------- | --------------------------------------- |
+| `QuizStatus`    | `DRAFT`, `PUBLISHED`, `ARCHIVED`                                  | Жизненный цикл квиза                    |
+| `QuestionType`  | `TEXT`, `IMAGE`                                                   | Тип контента вопроса                    |
+| `ChoiceMode`    | `SINGLE`, `MULTIPLE`                                              | Один или несколько правильных вариантов |
+| `SessionStatus` | `LOBBY`, `ACTIVE`, `QUESTION_OPEN`, `QUESTION_CLOSED`, `FINISHED` | Состояние live-сессии                   |
+
 
 #### Инварианты БД
 
@@ -221,10 +235,12 @@ erDiagram
 
 ### 7.1. Токены
 
-| Токен | Где | TTL (по умолчанию) | Payload |
-|-------|-----|-------------------|---------|
-| Access | `Authorization: Bearer <token>` | 1h | `{ sub, email, role }` |
-| Refresh | httpOnly cookie `refreshToken`, path `/api/auth` | 7d | `{ sub }` |
+
+| Токен   | Где                                              | TTL (по умолчанию) | Payload                |
+| ------- | ------------------------------------------------ | ------------------ | ---------------------- |
+| Access  | `Authorization: Bearer <token>`                  | 1h                 | `{ sub, email, role }` |
+| Refresh | httpOnly cookie `refreshToken`, path `/api/auth` | 7d                 | `{ sub }`              |
+
 
 **Обязательно:** одинаковые `JWT_SECRET` и `JWT_REFRESH_SECRET` в `auth-service` и `quiz-service` (или позже — отдельный endpoint introspection; в MVP — shared secret).
 
@@ -232,18 +248,21 @@ erDiagram
 
 Базовый URL: `http://localhost:3001`
 
-| Метод | Путь | Auth | Описание |
-|-------|------|------|----------|
-| GET | `/health` | — | Статус сервиса и PostgreSQL |
-| POST | `/api/auth/register` | — | Регистрация |
-| POST | `/api/auth/login` | — | Вход |
-| POST | `/api/auth/refresh` | cookie | Новый access token |
-| POST | `/api/auth/logout` | — | Очистка refresh cookie |
-| GET | `/api/auth/me` | Bearer | Профиль текущего пользователя |
+
+| Метод | Путь                 | Auth   | Описание                      |
+| ----- | -------------------- | ------ | ----------------------------- |
+| GET   | `/health`            | —      | Статус сервиса и PostgreSQL   |
+| POST  | `/api/auth/register` | —      | Регистрация                   |
+| POST  | `/api/auth/login`    | —      | Вход                          |
+| POST  | `/api/auth/refresh`  | cookie | Новый access token            |
+| POST  | `/api/auth/logout`   | —      | Очистка refresh cookie        |
+| GET   | `/api/auth/me`       | Bearer | Профиль текущего пользователя |
+
 
 #### POST `/api/auth/register`
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com",
@@ -251,9 +270,11 @@ erDiagram
   "role": "ORGANIZER"
 }
 ```
+
 `role` опционален, по умолчанию `MEMBER`.
 
 **Response 201:**
+
 ```json
 {
   "success": true,
@@ -279,6 +300,7 @@ erDiagram
 #### GET `/api/auth/me`
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -301,14 +323,16 @@ erDiagram
 }
 ```
 
-| HTTP | Типичные `code` |
-|------|-----------------|
-| 400 | `INVALID_EMAIL`, `INVALID_PASSWORD`, `INVALID_ROLE` |
-| 401 | `INVALID_CREDENTIALS`, `MISSING_TOKEN`, `INVALID_TOKEN` |
-| 403 | `FORBIDDEN` |
-| 404 | `ROUTE_NOT_FOUND`, `USER_NOT_FOUND`, `QUIZ_NOT_FOUND` |
-| 409 | `EMAIL_EXISTS` |
-| 500 | `INTERNAL_ERROR` |
+
+| HTTP | Типичные `code`                                         |
+| ---- | ------------------------------------------------------- |
+| 400  | `INVALID_EMAIL`, `INVALID_PASSWORD`, `INVALID_ROLE`     |
+| 401  | `INVALID_CREDENTIALS`, `MISSING_TOKEN`, `INVALID_TOKEN` |
+| 403  | `FORBIDDEN`                                             |
+| 404  | `ROUTE_NOT_FOUND`, `USER_NOT_FOUND`, `QUIZ_NOT_FOUND`   |
+| 409  | `EMAIL_EXISTS`                                          |
+| 500  | `INTERNAL_ERROR`                                        |
+
 
 ---
 
@@ -320,22 +344,27 @@ erDiagram
 
 ### 8.1. Health
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/health` | Статус + PostgreSQL |
+
+| Метод | Путь      | Описание            |
+| ----- | --------- | ------------------- |
+| GET   | `/health` | Статус + PostgreSQL |
+
 
 ### 8.2. Quizzes (ORGANIZER)
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/api/quizzes` | Список квизов текущего организатора |
-| POST | `/api/quizzes` | Создать квиз (DRAFT) |
-| GET | `/api/quizzes/:id` | Детали квиза + вопросы |
-| PATCH | `/api/quizzes/:id` | Обновить метаданные |
-| DELETE | `/api/quizzes/:id` | Удалить (только DRAFT) |
-| POST | `/api/quizzes/:id/publish` | Статус → PUBLISHED |
+
+| Метод  | Путь                       | Описание                            |
+| ------ | -------------------------- | ----------------------------------- |
+| GET    | `/api/quizzes`             | Список квизов текущего организатора |
+| POST   | `/api/quizzes`             | Создать квиз (DRAFT)                |
+| GET    | `/api/quizzes/:id`         | Детали квиза + вопросы              |
+| PATCH  | `/api/quizzes/:id`         | Обновить метаданные                 |
+| DELETE | `/api/quizzes/:id`         | Удалить (только DRAFT)              |
+| POST   | `/api/quizzes/:id/publish` | Статус → PUBLISHED                  |
+
 
 **POST `/api/quizzes` — Request:**
+
 ```json
 {
   "title": "Викторина по истории",
@@ -347,14 +376,17 @@ erDiagram
 
 ### 8.3. Questions (ORGANIZER, владелец квиза)
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| POST | `/api/quizzes/:quizId/questions` | Добавить вопрос |
-| PATCH | `/api/questions/:id` | Изменить вопрос |
-| DELETE | `/api/questions/:id` | Удалить вопрос |
-| PUT | `/api/questions/:id/options` | Заменить варианты ответа |
+
+| Метод  | Путь                             | Описание                 |
+| ------ | -------------------------------- | ------------------------ |
+| POST   | `/api/quizzes/:quizId/questions` | Добавить вопрос          |
+| PATCH  | `/api/questions/:id`             | Изменить вопрос          |
+| DELETE | `/api/questions/:id`             | Удалить вопрос           |
+| PUT    | `/api/questions/:id/options`     | Заменить варианты ответа |
+
 
 **POST question — Request:**
+
 ```json
 {
   "orderIndex": 0,
@@ -372,19 +404,22 @@ erDiagram
 
 ### 8.4. Sessions (live)
 
-| Метод | Путь | Роль | Описание |
-|-------|------|------|----------|
-| POST | `/api/sessions` | ORGANIZER | Создать сессию (`roomCode` генерируется) |
-| GET | `/api/sessions/by-code/:roomCode` | Auth | Инфо о комнате (название квиза, статус) |
-| POST | `/api/sessions/:id/join` | MEMBER+ | Войти в комнату |
-| POST | `/api/sessions/:id/start` | ORGANIZER | Старт квиза |
-| POST | `/api/sessions/:id/questions/:questionId/show` | ORGANIZER | Показать вопрос |
-| POST | `/api/sessions/:id/questions/close` | ORGANIZER | Закрыть приём ответов |
-| POST | `/api/sessions/:id/end` | ORGANIZER | Завершить, сохранить результат |
-| GET | `/api/sessions/:id/leaderboard` | Auth | Текущий лидерборд |
-| POST | `/api/sessions/:id/answers` | MEMBER | Отправить ответ (дублирует WS для надёжности) |
+
+| Метод | Путь                                           | Роль      | Описание                                      |
+| ----- | ---------------------------------------------- | --------- | --------------------------------------------- |
+| POST  | `/api/sessions`                                | ORGANIZER | Создать сессию (`roomCode` генерируется)      |
+| GET   | `/api/sessions/by-code/:roomCode`              | Auth      | Инфо о комнате (название квиза, статус)       |
+| POST  | `/api/sessions/:id/join`                       | MEMBER+   | Войти в комнату                               |
+| POST  | `/api/sessions/:id/start`                      | ORGANIZER | Старт квиза                                   |
+| POST  | `/api/sessions/:id/questions/:questionId/show` | ORGANIZER | Показать вопрос                               |
+| POST  | `/api/sessions/:id/questions/close`            | ORGANIZER | Закрыть приём ответов                         |
+| POST  | `/api/sessions/:id/end`                        | ORGANIZER | Завершить, сохранить результат                |
+| GET   | `/api/sessions/:id/leaderboard`                | Auth      | Текущий лидерборд                             |
+| POST  | `/api/sessions/:id/answers`                    | MEMBER    | Отправить ответ (дублирует WS для надёжности) |
+
 
 **POST `/api/sessions/:id/answers` — Request:**
+
 ```json
 {
   "questionId": "uuid",
@@ -393,6 +428,7 @@ erDiagram
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -407,11 +443,13 @@ erDiagram
 
 ### 8.5. History
 
-| Метод | Путь | Роль | Описание |
-|-------|------|------|----------|
-| GET | `/api/history/organized` | ORGANIZER | Проведённые квизы |
-| GET | `/api/history/participated` | MEMBER | Участие в сессиях |
-| GET | `/api/history/sessions/:sessionId` | Auth | Детали + leaderboard snapshot |
+
+| Метод | Путь                               | Роль      | Описание                      |
+| ----- | ---------------------------------- | --------- | ----------------------------- |
+| GET   | `/api/history/organized`           | ORGANIZER | Проведённые квизы             |
+| GET   | `/api/history/participated`        | MEMBER    | Участие в сессиях             |
+| GET   | `/api/history/sessions/:sessionId` | Auth      | Детали + leaderboard snapshot |
+
 
 ---
 
@@ -423,27 +461,31 @@ erDiagram
 
 ### 9.1. Client → Server
 
-| Событие | Payload | Кто | Описание |
-|---------|---------|-----|----------|
-| `room:join` | `{ roomCode: string }` | Все | Войти в Socket-room `room:<code>` |
-| `session:start` | `{ sessionId: string }` | ORGANIZER | Старт (дубль REST) |
-| `question:show` | `{ sessionId, questionId }` | ORGANIZER | Открыть вопрос + серверный таймер |
-| `question:close` | `{ sessionId }` | ORGANIZER | Закрыть приём ответов |
-| `answer:submit` | `{ sessionId, questionId, selectedOptionIds: string[] }` | MEMBER | Ответ участника |
-| `session:end` | `{ sessionId }` | ORGANIZER | Финиш и лидерборд |
+
+| Событие          | Payload                                                  | Кто       | Описание                          |
+| ---------------- | -------------------------------------------------------- | --------- | --------------------------------- |
+| `room:join`      | `{ roomCode: string }`                                   | Все       | Войти в Socket-room `room:<code>` |
+| `session:start`  | `{ sessionId: string }`                                  | ORGANIZER | Старт (дубль REST)                |
+| `question:show`  | `{ sessionId, questionId }`                              | ORGANIZER | Открыть вопрос + серверный таймер |
+| `question:close` | `{ sessionId }`                                          | ORGANIZER | Закрыть приём ответов             |
+| `answer:submit`  | `{ sessionId, questionId, selectedOptionIds: string[] }` | MEMBER    | Ответ участника                   |
+| `session:end`    | `{ sessionId }`                                          | ORGANIZER | Финиш и лидерборд                 |
+
 
 ### 9.2. Server → Client (broadcast в `room:<code>`)
 
-| Событие | Payload | Когда |
-|---------|---------|-------|
-| `room:state` | `{ session, participantsCount }` | После join / изменения лобби |
-| `session:started` | `{ sessionId, quizTitle }` | Старт квиза |
-| `question:opened` | `{ question, options, endsAt }` | Вопрос открыт; `endsAt` — ISO, **серверное время** |
-| `question:closed` | `{ questionId }` | Время вышло или организатор закрыл |
-| `answer:received` | `{ userId, questionId }` | Уведомление организатору (без правильности) |
-| `leaderboard:update` | `{ entries: [{ userId, score, rank }] }` | После закрытия вопроса или конца сессии |
-| `session:finished` | `{ leaderboard, resultId }` | Квиз завершён |
-| `error` | `{ code, message }` | Ошибка валидации / прав |
+
+| Событие              | Payload                                  | Когда                                              |
+| -------------------- | ---------------------------------------- | -------------------------------------------------- |
+| `room:state`         | `{ session, participantsCount }`         | После join / изменения лобби                       |
+| `session:started`    | `{ sessionId, quizTitle }`               | Старт квиза                                        |
+| `question:opened`    | `{ question, options, endsAt }`          | Вопрос открыт; `endsAt` — ISO, **серверное время** |
+| `question:closed`    | `{ questionId }`                         | Время вышло или организатор закрыл                 |
+| `answer:received`    | `{ userId, questionId }`                 | Уведомление организатору (без правильности)        |
+| `leaderboard:update` | `{ entries: [{ userId, score, rank }] }` | После закрытия вопроса или конца сессии            |
+| `session:finished`   | `{ leaderboard, resultId }`              | Квиз завершён                                      |
+| `error`              | `{ code, message }`                      | Ошибка валидации / прав                            |
+
 
 ### 9.3. Правила realtime
 
@@ -455,11 +497,13 @@ erDiagram
 
 ### 9.4. Подсчёт баллов (MVP)
 
-| Условие | Очки |
-|---------|------|
-| `SINGLE` + верный вариант | 100 |
-| `MULTIPLE` + все верные и ни одного лишнего | 100 |
-| Иначе | 0 |
+
+| Условие                                     | Очки |
+| ------------------------------------------- | ---- |
+| `SINGLE` + верный вариант                   | 100  |
+| `MULTIPLE` + все верные и ни одного лишнего | 100  |
+| Иначе                                       | 0    |
+
 
 Бонус за скорость — **вне MVP**.
 
@@ -488,6 +532,8 @@ sequenceDiagram
   Quiz-->>O: leaderboard:update
 ```
 
+
+
 ### 10.2. Участник
 
 ```mermaid
@@ -508,25 +554,94 @@ sequenceDiagram
   Quiz-->>P: session:finished
 ```
 
+### 10.3. Frontend navigation flow (SchemaFront)
+
+Источник: `design_mockups/SchemaFront.png`. Схема фиксирует **навигацию UI** (страницы и overlay-компоненты), а не последовательность REST/Socket вызовов.
+
+```mermaid
+flowchart TB
+  subgraph entry [Entry]
+    Home["Homepage"]
+    Login["Login component overlay"]
+    SignUp["SignUp component overlay"]
+  end
+
+  subgraph organizer [Organizer path]
+    Create["QuizCreatePage"]
+    Export["Export quiz"]
+    Import["Import from history"]
+    OrgWait["OrgWaitingPage"]
+    OrgQuiz["QuizQuestionsPage Organizer full question"]
+  end
+
+  subgraph member [Member path]
+    Join["QuizJoinPage"]
+    MemWait["MemberWaitingPage"]
+    MemQuiz["QuizQuestionsPage Member answer options only"]
+  end
+
+  Final["Final page leaderboard"]
+
+  Home --> Login
+  Home --> SignUp
+  Login --> Login
+  SignUp --> SignUp
+  Login --> Create
+  SignUp --> Create
+
+  Home --> Join
+  Join --> MemWait
+  MemWait --> MemQuiz
+  MemQuiz --> MemQuiz
+  MemQuiz --> Final
+
+  Create --> Export
+  Export --> Create
+  Create --> Import
+  Import --> Create
+  Create --> OrgWait
+  OrgWait --> OrgQuiz
+  OrgQuiz --> OrgQuiz
+  OrgQuiz --> Final
+```
+
+| SchemaFront (схема) | Роль | Тип | Описание |
+| ------------------- | ---- | --- | -------- |
+| Homepage | Все | Страница | Точка входа: join quiz, create quiz, login/sign up |
+| Login component | Все | Overlay на Homepage | Модальная форма входа; после успеха → QuizCreatePage (организатор) |
+| SignUp component | Все | Overlay на Homepage | Модальная регистрация; после успеха → QuizCreatePage |
+| QuizCreatePage | ORGANIZER | Страница | Создание квиза; циклы Export / Import from history |
+| OrgWaitingPage | ORGANIZER | Страница | Лобби организатора, room code, ожидание участников |
+| QuizQuestionsPage (Organizer) | ORGANIZER | Страница | Полный текст вопроса + превью вариантов; цикл по вопросам |
+| QuizJoinPage | MEMBER | Страница | Ввод room code; с Homepage без overlay |
+| MemberWaitingPage | MEMBER | Страница | Ожидание старта от организатора |
+| QuizQuestionsPage (Member) | MEMBER | Страница | Только варианты ответа (кнопки); цикл по вопросам |
+| Final page (leaderboard) | Все | Страница | Итоговый лидерборд; конвергенция двух путей |
+
+Реализация в репозитории: `apps/web/quiz-pools/src/pages/` и `src/navigation/routes.js`. До подключения React Router используется state-based routing в `App.jsx`; dev-навигация в header для просмотра всех экранов.
+
 ---
 
 ## 11. apps/web — маршруты (контракт UI)
 
-| Путь | Доступ | Экран |
-|------|--------|-------|
-| `/login` | Public | Вход |
-| `/register` | Public | Регистрация (выбор роли) |
-| `/` | Auth | Редирект по роли |
-| `/organizer/quizzes` | ORGANIZER | Список квизов |
-| `/organizer/quizzes/new` | ORGANIZER | Создание квиза |
-| `/organizer/quizzes/:id/edit` | ORGANIZER | Редактор вопросов |
-| `/organizer/sessions/:id/host` | ORGANIZER | Панель ведущего + WS |
-| `/join` | Auth | Ввод кода комнаты |
-| `/play/:roomCode` | Auth | Экран участника + WS |
-| `/results/:sessionId` | Auth | Лидерборд |
-| `/history` | Auth | История (вкладки по роли) |
+Маршруты согласованы с **SchemaFront** (§10.3). Целевые URL для React Router — в колонке «URL (целевой)»; текущий MVP использует внутренние `route id` из `routes.js`.
 
-Состояния экранов (по UI/UX brief): `loading`, `empty`, `error`, `success` — обязательны для MVP-экранов join и host.
+| SchemaFront | URL (целевой) | route id | Файл | Доступ |
+| ----------- | ------------- | -------- | ---- | ------ |
+| Homepage | `/` | `home` | `HomePage.jsx` | Public |
+| Login component | overlay на `/` | — | `LoginForm.jsx` | Public |
+| SignUp component | overlay на `/` | — | `SignUpForm.jsx` | Public |
+| QuizCreatePage | `/organizer/quiz/create` | `quiz-create` | `QuizCreatePage.jsx` | ORGANIZER |
+| OrgWaitingPage | `/organizer/session/waiting` | `org-waiting` | `OrgWaitingPage.jsx` | ORGANIZER |
+| QuizQuestionsPage (Organizer) | `/organizer/session/play` | `organizer-quiz` | `OrganizerQuizPage.jsx` | ORGANIZER |
+| QuizJoinPage | `/join` | `quiz-join` | `QuizJoinPage.jsx` | Auth (MEMBER) |
+| MemberWaitingPage | `/play/waiting` | `member-waiting` | `MemberWaitingPage.jsx` | Auth (MEMBER) |
+| QuizQuestionsPage (Member) | `/play` | `member-quiz` | `MemberQuizPage.jsx` | Auth (MEMBER) |
+| Final page (leaderboard) | `/results` | `leaderboard` | `LeaderboardPage.jsx` | Auth |
+
+Дополнительные экраны (после MVP UI по схеме): список квизов (`/organizer/quizzes`), редактор по id (`/organizer/quizzes/:id/edit`), история (`/history`).
+
+Состояния экранов (по UI/UX brief): `loading`, `empty`, `error`, `success` — обязательны для MVP-экранов join, waiting и play.
 
 ---
 
@@ -534,32 +649,38 @@ sequenceDiagram
 
 ### auth-service (`.env`)
 
-| Переменная | Пример | Описание |
-|------------|--------|----------|
-| `DATABASE_URL` | `postgresql://authuser:***@localhost:5432/auth_service` | PostgreSQL |
-| `JWT_SECRET` | random string | Подпись access token |
-| `JWT_REFRESH_SECRET` | random string | Подпись refresh token |
-| `JWT_EXPIRY` | `1h` | TTL access |
-| `JWT_REFRESH_EXPIRY` | `7d` | TTL refresh |
-| `PORT` | `3001` | HTTP порт |
-| `CORS_ORIGIN` | `http://localhost:3000` | Origin фронтенда |
+
+| Переменная           | Пример                                                  | Описание              |
+| -------------------- | ------------------------------------------------------- | --------------------- |
+| `DATABASE_URL`       | `postgresql://authuser:***@localhost:5432/auth_service` | PostgreSQL            |
+| `JWT_SECRET`         | random string                                           | Подпись access token  |
+| `JWT_REFRESH_SECRET` | random string                                           | Подпись refresh token |
+| `JWT_EXPIRY`         | `1h`                                                    | TTL access            |
+| `JWT_REFRESH_EXPIRY` | `7d`                                                    | TTL refresh           |
+| `PORT`               | `3001`                                                  | HTTP порт             |
+| `CORS_ORIGIN`        | `http://localhost:3000`                                 | Origin фронтенда      |
+
 
 ### quiz-service (`.env`, этап 1+)
 
-| Переменная | Пример | Описание |
-|------------|--------|----------|
-| `DATABASE_URL` | `postgresql://...@localhost:5432/quiz_service` | PostgreSQL |
-| `JWT_SECRET` | **тот же, что auth** | Верификация Bearer |
-| `PORT` | `3002` | HTTP + Socket.IO |
-| `CORS_ORIGIN` | `http://localhost:3000` | CORS |
-| `ROOM_CODE_LENGTH` | `6` | Длина кода комнаты |
+
+| Переменная         | Пример                                         | Описание           |
+| ------------------ | ---------------------------------------------- | ------------------ |
+| `DATABASE_URL`     | `postgresql://...@localhost:5432/quiz_service` | PostgreSQL         |
+| `JWT_SECRET`       | **тот же, что auth**                           | Верификация Bearer |
+| `PORT`             | `3002`                                         | HTTP + Socket.IO   |
+| `CORS_ORIGIN`      | `http://localhost:3000`                        | CORS               |
+| `ROOM_CODE_LENGTH` | `6`                                            | Длина кода комнаты |
+
 
 ### apps/web (`.env`)
 
-| Переменная | Пример |
-|------------|--------|
+
+| Переменная          | Пример                  |
+| ------------------- | ----------------------- |
 | `VITE_AUTH_API_URL` | `http://localhost:3001` |
 | `VITE_QUIZ_API_URL` | `http://localhost:3002` |
+
 
 ---
 
@@ -597,16 +718,18 @@ npm install && npm run dev
 
 ## 15. Этапы и критерии готовности
 
-| Этап | Содержание | Критерий приёмки |
-|------|------------|------------------|
+
+| Этап  | Содержание                  | Критерий приёмки                                     |
+| ----- | --------------------------- | ---------------------------------------------------- |
 | **0** | ARCHITECTURE.md, .gitignore | Документ согласован; контракты REST/WS зафиксированы |
-| **1** | quiz-service + Prisma | CRUD квиза с вопросами через curl/Postman |
-| **2** | apps/web auth + dashboard | Регистрация/вход; разный home для ролей |
-| **3** | UI редактора квиза | Квиз создаётся из браузера |
-| **4** | Socket.IO live | 1 организатор + 2 участника, синхронный вопрос |
-| **5** | Лидерборд + QuizResult | Итог виден всем; данные в БД после рестарта |
-| **6** | История + README + compose | История в UI; полный локальный сценарий в README |
-| **7** | Сдача | Записка, ссылки Figma + репозиторий |
+| **1** | quiz-service + Prisma       | CRUD квиза с вопросами через curl/Postman            |
+| **2** | apps/web auth + dashboard   | Регистрация/вход; разный home для ролей              |
+| **3** | UI редактора квиза          | Квиз создаётся из браузера                           |
+| **4** | Socket.IO live              | 1 организатор + 2 участника, синхронный вопрос       |
+| **5** | Лидерборд + QuizResult      | Итог виден всем; данные в БД после рестарта          |
+| **6** | История + README + compose  | История в UI; полный локальный сценарий в README     |
+| **7** | Сдача                       | Записка, ссылки Figma + репозиторий                  |
+
 
 ---
 
@@ -630,23 +753,30 @@ flowchart LR
   E5 --> E6
 ```
 
+
+
 Параллельно с E1–E3 можно готовить wireframes в Figma (не блокирует backend).
 
 ---
 
 ## 17. Ссылки на артефакты сдачи (заполнить позже)
 
-| Артефакт | URL |
-|----------|-----|
-| Miro | _TBD_ |
-| Figma | _TBD_ |
-| Репозиторий | _TBD_ |
-| Демо (опционально) | _TBD_ |
+
+| Артефакт           | URL   |
+| ------------------ | ----- |
+| Miro               | *TBD* |
+| Figma              | *TBD* |
+| Репозиторий        | *TBD* |
+| Демо (опционально) | *TBD* |
+
 
 ---
 
 ## 18. История изменений документа
 
-| Версия | Дата | Изменения |
-|--------|------|-----------|
-| 0.1 | 2026-06-05 | Первая фиксация архитектуры MVP (этап 0) |
+
+| Версия | Дата       | Изменения                                |
+| ------ | ---------- | ---------------------------------------- |
+| 0.1    | 2026-06-05 | Первая фиксация архитектуры MVP (этап 0) |
+
+
