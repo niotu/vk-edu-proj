@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const QUIZ_SOCKET_URL = import.meta.env.VITE_QUIZ_API_URL || 'http://localhost:3002';
+const QUIZ_SOCKET_URL = import.meta.env.VITE_QUIZ_API_URL || undefined;
 
 class SocketClient {
   constructor() {
