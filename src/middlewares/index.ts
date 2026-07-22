@@ -1,2 +1,0 @@
-// Middleware barrel export
-export {};

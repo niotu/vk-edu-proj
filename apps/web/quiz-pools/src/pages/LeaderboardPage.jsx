@@ -1,35 +1,23 @@
 import { ROUTES } from '../navigation/routes.js'
+import Leaderboard from '../components/Leaderboard.jsx'
 
-const LEADERBOARD = [
-  { rank: 1, name: 'Alice', score: 200 },
-  { rank: 2, name: 'Bob', score: 100 },
-  { rank: 3, name: 'You', score: 100 },
-]
-
-export default function LeaderboardPage({ onNavigate }) {
+export default function LeaderboardPage({ onNavigate, entries = [], currentUserId }) {
   return (
     <section className="qp-screen qp-screen--wide">
       <div className="qp-card qp-card--wide">
         <h1 className="qp-title">Final leaderboard</h1>
         <p className="qp-subtitle">Quiz finished — thanks for playing!</p>
 
-        <ol className="qp-leaderboard" aria-label="Leaderboard">
-          {LEADERBOARD.map((row) => (
-            <li key={row.rank} className="qp-leaderboard__row">
-              <span className="qp-leaderboard__rank">#{row.rank}</span>
-              <span className="qp-leaderboard__name">{row.name}</span>
-              <span className="qp-leaderboard__score">{row.score} pts</span>
-            </li>
-          ))}
-        </ol>
+        <Leaderboard entries={entries} currentUserId={currentUserId} />
 
-        <button
-          className="qp-primaryBtn"
-          type="button"
-          onClick={() => onNavigate(ROUTES.HOME)}
-        >
-          Back to home
-        </button>
+        <div className="qp-actions qp-actions--row">
+          <button className="qp-secondaryBtn" type="button" onClick={() => onNavigate(ROUTES.PROFILE)}>
+            My history
+          </button>
+          <button className="qp-primaryBtn" type="button" onClick={() => onNavigate(ROUTES.HOME)}>
+            Back to home
+          </button>
+        </div>
       </div>
     </section>
   )

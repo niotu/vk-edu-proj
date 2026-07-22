@@ -15,18 +15,10 @@ export function requireAuth(req: AuthRequest, _res: Response, next: NextFunction
     req.user = {
       id: payload.sub,
       email: payload.email,
-      role: payload.role,
+      name: payload.name,
     };
     next();
   } catch {
     next(new AppError('Invalid or expired access token', HTTP_STATUS.UNAUTHORIZED, 'INVALID_TOKEN'));
   }
-}
-
-export function requireOrganizer(req: AuthRequest, _res: Response, next: NextFunction): void {
-  if (req.user?.role !== 'ORGANIZER') {
-    next(new AppError('Organizer role required', HTTP_STATUS.FORBIDDEN, 'FORBIDDEN'));
-    return;
-  }
-  next();
 }

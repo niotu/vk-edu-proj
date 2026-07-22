@@ -5,6 +5,7 @@ import { env } from '../config/env';
 export interface AccessTokenPayload {
   sub: string;
   email: string;
+  name: string;
   role: Role;
 }
 

@@ -35,7 +35,7 @@ export function setupSocket(io: Server): void {
       (socket as AuthenticatedSocket).user = {
         id: payload.sub,
         email: payload.email,
-        role: payload.role,
+        name: payload.name,
       };
       next();
     } catch {
@@ -55,7 +55,9 @@ export function setupSocket(io: Server): void {
         }
 
         const session = await sessionService.getByRoomCode(roomCode);
-        await sessionService.join(session.id, authSocket.user.id);
+        if (session.organizerId !== authSocket.user.id) {
+          await sessionService.join(session.id, authSocket.user.id, authSocket.user.name);
+        }
         await socket.join(roomChannel(roomCode));
         socket.emit('room:joined', { roomCode, sessionId: session.id });
       } catch (err) {
@@ -65,10 +67,6 @@ export function setupSocket(io: Server): void {
 
     socket.on('session:start', async (payload: { sessionId?: string }) => {
       try {
-        if (authSocket.user.role !== 'ORGANIZER') {
-          emitSocketError(socket, 'FORBIDDEN', 'Organizer role required');
-          return;
-        }
         const sessionId = payload?.sessionId;
         if (!sessionId) {
           emitSocketError(socket, 'INVALID_INPUT', 'sessionId is required');
@@ -86,10 +84,6 @@ export function setupSocket(io: Server): void {
       'question:show',
       async (payload: { sessionId?: string; questionId?: string }) => {
         try {
-          if (authSocket.user.role !== 'ORGANIZER') {
-            emitSocketError(socket, 'FORBIDDEN', 'Organizer role required');
-            return;
-          }
           const { sessionId, questionId } = payload ?? {};
           if (!sessionId || !questionId) {
             emitSocketError(socket, 'INVALID_INPUT', 'sessionId and questionId are required');
@@ -104,10 +98,6 @@ export function setupSocket(io: Server): void {
 
     socket.on('question:close', async (payload: { sessionId?: string }) => {
       try {
-        if (authSocket.user.role !== 'ORGANIZER') {
-          emitSocketError(socket, 'FORBIDDEN', 'Organizer role required');
-          return;
-        }
         const sessionId = payload?.sessionId;
         if (!sessionId) {
           emitSocketError(socket, 'INVALID_INPUT', 'sessionId is required');
@@ -147,10 +137,6 @@ export function setupSocket(io: Server): void {
 
     socket.on('session:end', async (payload: { sessionId?: string }) => {
       try {
-        if (authSocket.user.role !== 'ORGANIZER') {
-          emitSocketError(socket, 'FORBIDDEN', 'Organizer role required');
-          return;
-        }
         const sessionId = payload?.sessionId;
         if (!sessionId) {
           emitSocketError(socket, 'INVALID_INPUT', 'sessionId is required');

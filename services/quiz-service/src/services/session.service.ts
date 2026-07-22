@@ -8,6 +8,7 @@ import { emitToRoom } from '../lib/broadcast';
 import {
   clearQuestionTimer,
   getQuestionEndsAt,
+  getQuestionTiming,
   isQuestionOpen,
   scheduleQuestionTimer,
 } from '../lib/sessionState';
@@ -79,17 +80,26 @@ export class SessionService {
     return session;
   }
 
-  async join(sessionId: string, userId: string) {
+  async join(sessionId: string, userId: string, displayName?: string) {
     const session = await this.getSessionOrThrow(sessionId);
+
+    if (session.organizerId === userId) {
+      throw new AppError(
+        'Organizer cannot join their own session as a participant',
+        HTTP_STATUS.BAD_REQUEST,
+        'ORGANIZER_CANNOT_JOIN'
+      );
+    }
 
     if (session.status === SessionStatus.FINISHED) {
       throw new AppError('Session has ended', HTTP_STATUS.BAD_REQUEST, 'SESSION_FINISHED');
     }
 
+    const name = displayName?.trim() || undefined;
     const participant = await prisma.sessionParticipant.upsert({
       where: { sessionId_userId: { sessionId, userId } },
-      create: { sessionId, userId },
-      update: {},
+      create: { sessionId, userId, displayName: name },
+      update: name ? { displayName: name } : {},
     });
 
     const refreshed = await prisma.quizSession.findUniqueOrThrow({
@@ -168,7 +178,7 @@ export class SessionService {
       include: sessionWithQuiz,
     });
 
-    scheduleQuestionTimer(sessionId, questionId, endsAt, () => {
+    scheduleQuestionTimer(sessionId, questionId, endsAt, timeLimitSec * 1000, () => {
       void this.closeQuestion(sessionId, organizerId, true);
     });
 
@@ -187,6 +197,47 @@ export class SessionService {
     });
 
     return { session: updated, question, endsAt };
+  }
+
+  async getState(sessionId: string, userId: string) {
+    const session = await this.getSessionOrThrow(sessionId);
+
+    if (session.organizerId !== userId) {
+      await this.ensureParticipant(sessionId, userId);
+    }
+
+    const publicSession = {
+      id: session.id,
+      status: session.status,
+    };
+
+    if (session.status !== SessionStatus.QUESTION_OPEN || !session.currentQuestionId) {
+      return { session: publicSession, question: null, options: [], endsAt: null };
+    }
+
+    const question = await prisma.question.findUnique({
+      where: { id: session.currentQuestionId },
+      include: { options: { orderBy: { orderIndex: 'asc' } } },
+    });
+
+    if (!question) {
+      return { session: publicSession, question: null, options: [], endsAt: null };
+    }
+
+    return {
+      session: publicSession,
+      question: {
+        id: question.id,
+        text: question.text,
+        type: question.type,
+        imageUrl: question.imageUrl,
+        choiceMode: question.choiceMode,
+        orderIndex: question.orderIndex,
+        timeLimitSec: question.timeLimitSec ?? 30,
+      },
+      options: publicOptions(question.options),
+      endsAt: this.getActiveQuestionDeadline(sessionId),
+    };
   }
 
   async closeQuestion(sessionId: string, organizerId: string, auto = false) {
@@ -272,10 +323,16 @@ export class SessionService {
       }
     }
 
+    const timing = getQuestionTiming(sessionId);
+    const remainingFraction = timing
+      ? (timing.endsAt.getTime() - Date.now()) / timing.timeLimitMs
+      : 0;
+
     const { isCorrect, pointsAwarded } = calculatePoints(
       question.choiceMode,
       question.options,
-      selectedOptionIds
+      selectedOptionIds,
+      remainingFraction
     );
 
     const [answer, participant] = await prisma.$transaction([
@@ -361,6 +418,7 @@ export class SessionService {
 
     return participants.map((p, index) => ({
       userId: p.userId,
+      name: p.displayName || 'Player ' + (index + 1),
       score: p.totalScore,
       rank: index + 1,
     }));

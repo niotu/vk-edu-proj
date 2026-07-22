@@ -1,16 +1,12 @@
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 
 COPY . .
 
-ARG VITE_AUTH_API_URL=http://localhost:3001
-ARG VITE_QUIZ_API_URL=http://localhost:3002
-ENV VITE_AUTH_API_URL=$VITE_AUTH_API_URL
-ENV VITE_QUIZ_API_URL=$VITE_QUIZ_API_URL
 
 RUN npm run build
 

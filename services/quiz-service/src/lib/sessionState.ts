@@ -4,6 +4,7 @@ interface QuestionTimer {
   sessionId: string;
   questionId: string;
   endsAt: Date;
+  timeLimitMs: number;
   timeoutId: ReturnType<typeof setTimeout>;
 }
 
@@ -27,10 +28,18 @@ export function clearQuestionTimer(sessionId: string): void {
   }
 }
 
+export function getQuestionTiming(
+  sessionId: string
+): { endsAt: Date; timeLimitMs: number } | null {
+  const timer = timers.get(sessionId);
+  return timer ? { endsAt: timer.endsAt, timeLimitMs: timer.timeLimitMs } : null;
+}
+
 export function scheduleQuestionTimer(
   sessionId: string,
   questionId: string,
   endsAt: Date,
+  timeLimitMs: number,
   onExpire: CloseHandler
 ): void {
   clearQuestionTimer(sessionId);
@@ -42,5 +51,5 @@ export function scheduleQuestionTimer(
     });
   }, delay);
 
-  timers.set(sessionId, { sessionId, questionId, endsAt, timeoutId });
+  timers.set(sessionId, { sessionId, questionId, endsAt, timeLimitMs, timeoutId });
 }

@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { quizController } from '../controllers/quiz.controller';
 import { questionController } from '../controllers/question.controller';
-import { requireAuth, requireOrganizer } from '../middlewares/auth';
+import { requireAuth } from '../middlewares/auth';
 import { asyncHandler } from '../middlewares/errorHandler';
 import { AuthRequest } from '../types';
 
 const router = Router();
 
-router.use(requireAuth, requireOrganizer);
+router.use(requireAuth);
 
 router.get('/', asyncHandler((req, res) => quizController.list(req as AuthRequest, res)));
 router.post('/', asyncHandler((req, res) => quizController.create(req as AuthRequest, res)));

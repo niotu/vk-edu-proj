@@ -11,7 +11,7 @@ function setRefreshCookie(res: Response, refreshToken: string): void {
   res.cookie(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
     secure: env.isProduction,
-    sameSite: 'lax',
+    sameSite: env.isProduction ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/api/auth',
   });
@@ -23,12 +23,13 @@ function clearRefreshCookie(res: Response): void {
 
 export const authController = {
   async register(req: AuthRequest, res: Response): Promise<void> {
-    const { email, password, role } = req.body as {
+    const { name, email, password, role } = req.body as {
+      name?: string;
       email: string;
       password: string;
       role?: Role;
     };
-    const result = await authService.register({ email, password, role });
+    const result = await authService.register({ name, email, password, role });
     setRefreshCookie(res, result.refreshToken);
     res.status(201).json(
       createSuccessResponse({

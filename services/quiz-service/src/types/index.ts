@@ -1,11 +1,9 @@
 import { Request } from 'express';
 
-export type UserRole = 'MEMBER' | 'ORGANIZER';
-
 export interface AuthUser {
   id: string;
   email: string;
-  role: UserRole;
+  name: string;
 }
 
 export interface AuthRequest extends Request {
@@ -28,11 +26,23 @@ export interface CreateQuestionInput {
   options: AnswerOptionInput[];
 }
 
+export interface ImportedQuizQuestionInput {
+  statement: string;
+  answers: string[];
+  correct: string[];
+  type?: 'TEXT' | 'IMAGE';
+  imageUrl?: string | null;
+  choiceMode?: 'SINGLE' | 'MULTIPLE';
+  timeLimitSec?: number | null;
+  orderIndex?: number;
+}
+
 export interface CreateQuizInput {
   title: string;
   description?: string;
   category?: string;
   questionTimeSec?: number;
+  questions?: ImportedQuizQuestionInput[];
 }
 
 export interface UpdateQuizInput {

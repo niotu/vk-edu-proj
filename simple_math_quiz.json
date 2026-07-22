@@ -1,0 +1,26 @@
+{
+  "title": "simple_math_quiz",
+  "author": "authorName",
+  "questions": [
+    {
+      "statement": "What is 2 + 2?",
+      "answers": ["3", "4", "5", "6"],
+      "correct": ["4"]
+    },
+    {
+      "statement": "What is 5 x 3?",
+      "answers": ["15", "10", "8", "20"],
+      "correct": ["15"]
+    },
+    {
+      "statement": "What is 12 - 7?",
+      "answers": ["4", "5", "6", "7"],
+      "correct": ["5"]
+    },
+    {
+      "statement": "Which numbers are even?",
+      "answers": ["1", "2", "3", "4"],
+      "correct": ["2", "4"]
+    }
+  ]
+}

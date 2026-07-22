@@ -15,11 +15,20 @@ const MIN_PASSWORD_LENGTH = 6;
 function toPublicUser(user: User): PublicUser {
   return {
     id: user.id,
+    name: user.name,
     email: user.email,
     role: user.role,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
+}
+
+function validateName(name?: string): string {
+  const trimmed = name?.trim() ?? '';
+  if (!trimmed) {
+    throw new AppError('Name is required', HTTP_STATUS.BAD_REQUEST, 'INVALID_NAME');
+  }
+  return trimmed;
 }
 
 function validateEmail(email: string): void {
@@ -38,20 +47,20 @@ function validatePassword(password: string): void {
   }
 }
 
-function validateRole(role?: string): Role {
-  if (!role) {
+function validateRole(role?: Role): Role {
+  if (role === undefined) {
     return Role.MEMBER;
   }
-  const normalized = role.toUpperCase();
-  if (normalized === Role.MEMBER || normalized === Role.ORGANIZER) {
-    return normalized as Role;
+  if (role !== Role.MEMBER && role !== Role.ORGANIZER) {
+    throw new AppError('Invalid role', HTTP_STATUS.BAD_REQUEST, 'INVALID_ROLE');
   }
-  throw new AppError('Invalid role. Use MEMBER or ORGANIZER', HTTP_STATUS.BAD_REQUEST, 'INVALID_ROLE');
+  return role;
 }
 
 export class AuthService {
   async register(input: RegisterInput) {
-    const email = input.email.trim().toLowerCase();
+    const email = input.email?.trim().toLowerCase() ?? '';
+    const name = validateName(input.name);
     validateEmail(email);
     validatePassword(input.password);
     const role = validateRole(input.role);
@@ -63,7 +72,7 @@ export class AuthService {
 
     const password_hash = await hashPassword(input.password);
     const user = await prisma.user.create({
-      data: { email, password_hash, role },
+      data: { name, email, password_hash, role },
     });
 
     const tokens = this.issueTokens(user);
@@ -71,18 +80,22 @@ export class AuthService {
   }
 
   async login(input: LoginInput) {
-    const email = input.email.trim().toLowerCase();
-    validateEmail(email);
-    validatePassword(input.password);
+    const email = input.email?.trim().toLowerCase() ?? '';
+    const invalidCredentials = () =>
+      new AppError('Invalid email or password', HTTP_STATUS.UNAUTHORIZED, 'INVALID_CREDENTIALS');
+
+    if (!email || !input.password) {
+      throw invalidCredentials();
+    }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw new AppError('Invalid email or password', HTTP_STATUS.UNAUTHORIZED, 'INVALID_CREDENTIALS');
+      throw invalidCredentials();
     }
 
     const valid = await verifyPassword(input.password, user.password_hash);
     if (!valid) {
-      throw new AppError('Invalid email or password', HTTP_STATUS.UNAUTHORIZED, 'INVALID_CREDENTIALS');
+      throw invalidCredentials();
     }
 
     const tokens = this.issueTokens(user);
@@ -122,6 +135,7 @@ export class AuthService {
     const accessToken = signAccessToken({
       sub: user.id,
       email: user.email,
+      name: user.name,
       role: user.role,
     });
     const refreshToken = signRefreshToken({ sub: user.id });

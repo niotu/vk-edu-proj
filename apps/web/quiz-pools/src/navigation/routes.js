@@ -1,4 +1,3 @@
-/** Screen ids aligned with design_mockups/SchemaFront.png */
 export const ROUTES = {
   HOME: 'home',
   QUIZ_CREATE: 'quiz-create',
@@ -8,6 +7,7 @@ export const ROUTES = {
   MEMBER_WAITING: 'member-waiting',
   MEMBER_QUIZ: 'member-quiz',
   LEADERBOARD: 'leaderboard',
+  PROFILE: 'profile',
 }
 
 export const ROUTE_LABELS = {
@@ -19,4 +19,5 @@ export const ROUTE_LABELS = {
   [ROUTES.MEMBER_WAITING]: 'MemberWaitingPage',
   [ROUTES.MEMBER_QUIZ]: 'Member quiz',
   [ROUTES.LEADERBOARD]: 'Leaderboard',
+  [ROUTES.PROFILE]: 'My account',
 }

@@ -30,7 +30,7 @@ services:
     container_name: vk-edu-auth-service
     environment:
       <<: *jwt-env
-      DATABASE_URL: postgresql://authuser:authpassword@postgres:5432/auth_service?schema=public
+      DATABASE_URL: "postgresql://authuser:authpassword@postgres:5432/auth_service?schema=public"
       JWT_EXPIRY: 1h
       JWT_REFRESH_EXPIRY: 7d
       PORT: 3001
@@ -48,7 +48,7 @@ services:
     container_name: vk-edu-quiz-service
     environment:
       <<: *jwt-env
-      DATABASE_URL: postgresql://authuser:authpassword@postgres:5432/quiz_service?schema=public
+      DATABASE_URL: "postgresql://authuser:authpassword@postgres:5432/quiz_service?schema=public"
       PORT: 3002
       NODE_ENV: production
       CORS_ORIGIN: http://localhost:3000
@@ -61,12 +61,10 @@ services:
       auth-service:
         condition: service_started
 
+
   web:
     build:
       context: ./apps/web/quiz-pools
-      args:
-        VITE_AUTH_API_URL: http://localhost:3001
-        VITE_QUIZ_API_URL: http://localhost:3002
     container_name: vk-edu-web
     ports:
       - "3000:80"

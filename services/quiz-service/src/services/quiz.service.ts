@@ -1,6 +1,6 @@
-import { Prisma, QuizStatus } from '@prisma/client';
+import { ChoiceMode, Prisma, QuestionType, QuizStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
-import { CreateQuizInput, UpdateQuizInput } from '../types';
+import { CreateQuizInput, ImportedQuizQuestionInput, UpdateQuizInput } from '../types';
 import { AppError, HTTP_STATUS } from '../utils/errors';
 
 const quizInclude = {
@@ -11,6 +11,108 @@ const quizInclude = {
     },
   },
 };
+
+type QuestionOptionCreateInput = {
+  text: string;
+  isCorrect: boolean;
+  orderIndex: number;
+};
+
+type QuestionCreateInput = {
+  orderIndex: number;
+  type: QuestionType;
+  text: string;
+  imageUrl: string | null;
+  choiceMode: ChoiceMode;
+  timeLimitSec: number | null;
+  options: { create: QuestionOptionCreateInput[] };
+};
+
+function parseQuestionType(value?: string): QuestionType {
+  const normalized = value?.toUpperCase();
+  if (normalized === 'TEXT' || normalized === 'IMAGE') {
+    return normalized as QuestionType;
+  }
+
+  return QuestionType.TEXT;
+}
+
+function parseChoiceMode(value: string | undefined, correctCount: number): ChoiceMode {
+  if (value) {
+    const normalized = value.toUpperCase();
+    if (normalized === 'SINGLE' || normalized === 'MULTIPLE') {
+      return normalized as ChoiceMode;
+    }
+    throw new AppError('Invalid choiceMode. Use SINGLE or MULTIPLE', HTTP_STATUS.BAD_REQUEST, 'INVALID_CHOICE_MODE');
+  }
+
+  return correctCount === 1 ? ChoiceMode.SINGLE : ChoiceMode.MULTIPLE;
+}
+
+function normalizeImportedQuestion(question: ImportedQuizQuestionInput, index: number): QuestionCreateInput {
+  const statement = question.statement?.trim();
+  if (!statement) {
+    throw new AppError('Each quiz question requires a statement', HTTP_STATUS.BAD_REQUEST, 'INVALID_QUESTION');
+  }
+
+  const answers = Array.isArray(question.answers)
+    ? question.answers.map((answer) => String(answer).trim())
+    : [];
+
+  if (answers.length < 2 || answers.some((answer) => !answer)) {
+    throw new AppError(
+      'Each quiz question must include at least two non-empty answers',
+      HTTP_STATUS.BAD_REQUEST,
+      'INVALID_ANSWERS'
+    );
+  }
+
+  const correctAnswers = Array.isArray(question.correct)
+    ? question.correct.map((answer) => String(answer).trim()).filter(Boolean)
+    : [];
+
+  if (correctAnswers.length === 0) {
+    throw new AppError(
+      'Each quiz question must include at least one correct answer',
+      HTTP_STATUS.BAD_REQUEST,
+      'INVALID_CORRECT_ANSWERS'
+    );
+  }
+
+  const correctSet = new Set(correctAnswers);
+  if (![...correctSet].every((answer) => answers.includes(answer))) {
+    throw new AppError(
+      'Correct answers must match one of the provided answer options',
+      HTTP_STATUS.BAD_REQUEST,
+      'INVALID_CORRECT_ANSWERS'
+    );
+  }
+
+  const choiceMode = parseChoiceMode(question.choiceMode, correctSet.size);
+  if (choiceMode === ChoiceMode.SINGLE && correctSet.size !== 1) {
+    throw new AppError(
+      'SINGLE choice questions must have exactly one correct answer',
+      HTTP_STATUS.BAD_REQUEST,
+      'INVALID_CORRECT_COUNT'
+    );
+  }
+
+  const options = answers.map((answer, optionIndex) => ({
+    text: answer,
+    isCorrect: correctSet.has(answer),
+    orderIndex: optionIndex,
+  }));
+
+  return {
+    orderIndex: question.orderIndex ?? index,
+    type: parseQuestionType(question.type),
+    text: statement,
+    imageUrl: question.imageUrl?.trim() || null,
+    choiceMode,
+    timeLimitSec: question.timeLimitSec ?? null,
+    options: { create: options },
+  };
+}
 
 export class QuizService {
   async listByOrganizer(organizerId: string) {
@@ -38,6 +140,10 @@ export class QuizService {
       );
     }
 
+    const importedQuestions = Array.isArray(input.questions)
+      ? input.questions.map((question, index) => normalizeImportedQuestion(question, index))
+      : [];
+
     return prisma.quiz.create({
       data: {
         organizerId,
@@ -45,8 +151,10 @@ export class QuizService {
         description: input.description?.trim() || null,
         category: input.category?.trim() || null,
         questionTimeSec,
-        status: QuizStatus.DRAFT,
+        status: importedQuestions.length > 0 ? QuizStatus.PUBLISHED : QuizStatus.DRAFT,
+        questions: importedQuestions.length > 0 ? { create: importedQuestions } : undefined,
       },
+      include: quizInclude,
     });
   }
 

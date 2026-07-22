@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { sessionController } from '../controllers/session.controller';
-import { requireAuth, requireOrganizer } from '../middlewares/auth';
+import { requireAuth } from '../middlewares/auth';
 import { asyncHandler } from '../middlewares/errorHandler';
 import { AuthRequest } from '../types';
 
@@ -15,7 +15,6 @@ router.get(
 
 router.post(
   '/',
-  requireOrganizer,
   asyncHandler((req, res) => sessionController.create(req as AuthRequest, res))
 );
 
@@ -29,6 +28,11 @@ router.get(
   asyncHandler((req, res) => sessionController.leaderboard(req as AuthRequest, res))
 );
 
+router.get(
+  '/:id/state',
+  asyncHandler((req, res) => sessionController.state(req as AuthRequest, res))
+);
+
 router.post(
   '/:id/answers',
   asyncHandler((req, res) => sessionController.submitAnswer(req as AuthRequest, res))
@@ -36,25 +40,21 @@ router.post(
 
 router.post(
   '/:id/start',
-  requireOrganizer,
   asyncHandler((req, res) => sessionController.start(req as AuthRequest, res))
 );
 
 router.post(
   '/:id/questions/:questionId/show',
-  requireOrganizer,
   asyncHandler((req, res) => sessionController.showQuestion(req as AuthRequest, res))
 );
 
 router.post(
   '/:id/questions/close',
-  requireOrganizer,
   asyncHandler((req, res) => sessionController.closeQuestion(req as AuthRequest, res))
 );
 
 router.post(
   '/:id/end',
-  requireOrganizer,
   asyncHandler((req, res) => sessionController.end(req as AuthRequest, res))
 );
 

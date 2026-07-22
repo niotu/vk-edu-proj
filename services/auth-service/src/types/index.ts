@@ -1,8 +1,9 @@
-import { Role } from '@prisma/client';
 import { Request } from 'express';
+import { Role } from '@prisma/client';
 
 export interface PublicUser {
   id: string;
+  name: string;
   email: string;
   role: Role;
   createdAt: Date;
@@ -16,10 +17,12 @@ export interface AuthRequest extends Request {
 export interface AccessTokenUser {
   id: string;
   email: string;
+  name: string;
   role: Role;
 }
 
 export interface RegisterInput {
+  name?: string;
   email: string;
   password: string;
   role?: Role;

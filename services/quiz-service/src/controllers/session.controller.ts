@@ -26,7 +26,7 @@ export const sessionController = {
   },
 
   async join(req: AuthRequest, res: Response): Promise<void> {
-    const result = await sessionService.join(req.params.id, req.user!.id);
+    const result = await sessionService.join(req.params.id, req.user!.id, req.user!.name);
     res.json(createSuccessResponse(result));
   },
 
@@ -70,6 +70,11 @@ export const sessionController = {
 
   async leaderboard(req: AuthRequest, res: Response): Promise<void> {
     const result = await sessionService.getLeaderboard(req.params.id);
+    res.json(createSuccessResponse(result));
+  },
+
+  async state(req: AuthRequest, res: Response): Promise<void> {
+    const result = await sessionService.getState(req.params.id, req.user!.id);
     res.json(createSuccessResponse(result));
   },
 };

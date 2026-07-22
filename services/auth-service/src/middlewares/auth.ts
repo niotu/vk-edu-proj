@@ -16,6 +16,7 @@ export function authenticate(req: AuthRequest, _res: Response, next: NextFunctio
     req.user = {
       id: payload.sub,
       email: payload.email,
+      name: payload.name,
       role: payload.role,
     };
     next();

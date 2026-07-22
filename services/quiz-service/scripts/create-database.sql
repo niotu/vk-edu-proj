@@ -1,4 +1,3 @@
--- Выполнить под суперпользователем PostgreSQL (postgres)
 CREATE DATABASE quiz_service OWNER authuser;
 
 \c quiz_service
