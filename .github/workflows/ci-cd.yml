@@ -78,7 +78,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            cd /opt/vk-edu-proj
+            cd /root/vk-edu-proj
             git fetch origin main
             git reset --hard origin/main
             docker compose up -d --build

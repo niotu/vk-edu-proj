@@ -4,14 +4,14 @@ A live-quiz platform: an organizer creates a quiz and starts a session under a r
 
 ## Tech Stack
 
-| Layer | Technologies |
-| --- | --- |
-| Frontend | React 18, Vite, Socket.IO client |
-| Backend | Node.js, Express, TypeScript |
-| ORM / DB | Prisma 5, PostgreSQL 16 |
-| Realtime | Socket.IO 4 |
-| Auth | JWT (access + refresh httpOnly cookie), bcrypt |
-| Infrastructure | Docker Compose, Nginx (frontend static hosting) |
+| Layer | Technologies | Explanation of choice |
+| --- | --- | --- |
+| Frontend | React 18, Vite, Socket.IO client | Technical specifications |
+| Backend | Node.js, Express, TypeScript | Technical specifications | 
+| ORM / DB | Prisma 5, PostgreSQL 16 | PSQL - technical specifications, Prisma - in my opinion, this is the most convenient ORM for not writing queries manually | 
+| Realtime | Socket.IO 4 | Technical specifications and managing real-time answer while quiz session | 
+| Auth | JWT (access + refresh httpOnly cookie), bcrypt | Technical specifications and access control while session & whole experience | 
+| Infrastructure | Docker Compose, Nginx (frontend static hosting) | Docker - microservices holding & orchestration, Nginx - routes manage |
 
 ## Microservices
 
@@ -74,23 +74,25 @@ erDiagram
 
   Quiz {
     uuid id PK
-    uuid organizerId "auth_service.User.id, no FK"
+    uuid organizerId
     string title
     string description
     string category
     int questionTimeSec
-    enum status "DRAFT | PUBLISHED | ARCHIVED"
+    enum status
   }
+
   Question {
     uuid id PK
     uuid quizId FK
     int orderIndex
-    enum type "TEXT | IMAGE"
+    enum type
     string text
     string imageUrl
-    enum choiceMode "SINGLE | MULTIPLE"
+    enum choiceMode
     int timeLimitSec
   }
+
   AnswerOption {
     uuid id PK
     uuid questionId FK
@@ -98,24 +100,27 @@ erDiagram
     boolean isCorrect
     int orderIndex
   }
+
   QuizSession {
     uuid id PK
     uuid quizId FK
     uuid organizerId
     string roomCode UK
-    enum status "LOBBY | ACTIVE | QUESTION_OPEN | QUESTION_CLOSED | FINISHED"
-    uuid currentQuestionId
+    enum status
+    uuid currentQuestionId FK
     datetime startedAt
     datetime endedAt
   }
+
   SessionParticipant {
     uuid id PK
     uuid sessionId FK
-    uuid userId "auth_service.User.id, no FK"
+    uuid userId
     string displayName
     int totalScore
     datetime joinedAt
   }
+
   ParticipantAnswer {
     uuid id PK
     uuid sessionId FK
@@ -126,9 +131,10 @@ erDiagram
     int pointsAwarded
     datetime answeredAt
   }
+
   QuizResult {
     uuid id PK
-    uuid sessionId FK UK
+    uuid sessionId FK
     json leaderboard
     datetime finishedAt
   }
